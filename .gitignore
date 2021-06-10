@@ -1,0 +1,6 @@
+node_modules
+configs/*.yml
+results/*.pdf
+credentials/rds/*.yml
+.DS_store
+.DS_Store

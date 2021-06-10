@@ -1,0 +1,25 @@
+template:
+  name: Development DB
+  type: rds
+  region: eu-west-3
+  database_id: develop-two-ows
+  engine: mysql
+  actions:
+    - name: latest snapshot
+      type: snapshot
+    - name: can connect to db
+      type: connection
+    - name: cpu below 80%
+      type: cloudwatch
+      metric: CPUUtilization
+      expected_output:
+        type: below
+        value: 80
+        measure: percent
+    - name: more than 5 gb of storage available
+      type: cloudwatch
+      metric: FreeStorageSpace
+      expected_output:
+        type: above
+        value: 5368709120
+        measure: gb
