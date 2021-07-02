@@ -1,6 +1,8 @@
 node_modules
 configs/*.yml
+configs/templates/*.yml
 results/*.pdf
 credentials/rds/*.yml
 .DS_store
 .DS_Store
+logs/*.log

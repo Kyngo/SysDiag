@@ -1,0 +1,6 @@
+config:
+  security:
+    certificates_path: /home/user/Documents/Certificates/
+  slack:
+    webhook: https://hooks.slack.com/services/123ABC456/123ABC456DEF/5648964FG78WER4H77RWH7RTY
+  awsCredentialsFile: /home/user/.aws/credentials

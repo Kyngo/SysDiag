@@ -2,10 +2,33 @@ const fs = require('fs');
 const path = require('path');
 
 const YAML = require('yaml');
+const moment = require('moment');
 
 const slackbot = require('./lib/slack');
 
 const package = require('../package.json');
+
+console.log = function() {
+    for (let idx = 0; idx < arguments.length; idx++) {
+        const arg = arguments[idx];
+        fs.appendFileSync(`${__dirname}/../logs/latest.log`, arg);
+        process.stdout.write(arg + "\r\n");
+    }
+}
+
+console.error = function() {
+    for (let idx = 0; idx < arguments.length; idx++) {
+        const arg = arguments[idx];
+        fs.appendFileSync(`${__dirname}/../logs/latest.log`, arg);
+        process.stderr.write(arg + "\r\n");
+    }
+}
+
+process.on('exit', (code) => {
+    if (fs.existsSync(`${__dirname}/../logs/latest.log`)) {
+        fs.renameSync(`${__dirname}/../logs/latest.log`, `${__dirname}/../logs/${moment().format('YYYY-MM-DD-HH-mm-ss')}.log`)
+    }
+});
 
 const coreConfig = fs.readFileSync(`${__dirname}/../configs/config.yml`, 'utf-8');
 if (!coreConfig) {
@@ -61,11 +84,11 @@ const parseFiles = (files, idx = 0) => {
         const rawTemplate = YAML.parse(templateConfig);
         if (rawTemplate.template) {
             const { template } = rawTemplate;
-            console.log(`📚 Running template "${template.name}" ...\r`);
+            console.log(`📚 Running template "${template.name}" ...`);
             switch (template.type) {
                 case 'ec2':
                     require('./aws/ec2')(template, config).then((results) => {
-                        console.log(`Template "${template.name}" executed\r`);
+                        console.log(`Template "${template.name}" executed`);
                         parseResults(results, template.name, () => {
                             parseFiles(files, idx + 1);
                         });
@@ -73,18 +96,18 @@ const parseFiles = (files, idx = 0) => {
                     break;
                 case 'rds':
                     require('./aws/rds')(template, config).then((results) => {
-                        console.log(`Template "${template.name}" executed\r`);
+                        console.log(`Template "${template.name}" executed`);
                         parseResults(results, template.name, () => {
                             parseFiles(files, idx + 1);
                         });
                     });
                     break;
                 default:
-                    console.log(`Unknown type ${template.type}\r`);
+                    console.log(`Unknown type ${template.type}`);
                     process.exit();
             }
         } else {
-            console.log(`Corrupted template ${files[idx]}\r`);
+            console.log(`Corrupted template ${files[idx]}`);
             process.exit();
         }
     }
@@ -103,24 +126,26 @@ const sortFiles = (err, files) => {
         if (y > x) return -1;
         return 0;
     });
-    console.log(`Found ${sortedFiles.length} templates. Loading...\r`);
+    console.log(`Found ${sortedFiles.length} templates. Loading...`);
     setTimeout(() => {
         parseFiles(sortedFiles, 0);
     }, 1000);
 }
 
 const initialize = () => {
-    console.log(`
- ███████╗██╗   ██╗███████╗██████╗ ██╗ █████╗  ██████╗ \r
- ██╔════╝╚██╗ ██╔╝██╔════╝██╔══██╗██║██╔══██╗██╔════╝ \r
- ███████╗ ╚████╔╝ ███████╗██║  ██║██║███████║██║  ███╗\r
- ╚════██║  ╚██╔╝  ╚════██║██║  ██║██║██╔══██║██║   ██║\r
- ███████║   ██║   ███████║██████╔╝██║██║  ██║╚██████╔╝\r
- ╚══════╝   ╚═╝   ╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝ ╚═════╝ \r
- \r`);
-    console.log(`
-    - Systems Diagnostics tool - Version ${package.version}\r
-    `);
+    if (!fs.existsSync(`${__dirname}/../logs`)) {
+        fs.mkdirSync(`${__dirname}/../logs`);
+    }
+    console.log(``);
+    console.log(`███████╗██╗   ██╗███████╗██████╗ ██╗ █████╗  ██████╗ `);
+    console.log(`██╔════╝╚██╗ ██╔╝██╔════╝██╔══██╗██║██╔══██╗██╔════╝ `);
+    console.log(`███████╗ ╚████╔╝ ███████╗██║  ██║██║███████║██║  ███╗`);
+    console.log(`╚════██║  ╚██╔╝  ╚════██║██║  ██║██║██╔══██║██║   ██║`);
+    console.log(`███████║   ██║   ███████║██████╔╝██║██║  ██║╚██████╔╝`);
+    console.log(`╚══════╝   ╚═╝   ╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝ ╚═════╝ `);
+    console.log(``);
+    console.log(`    - Systems Diagnostics tool - Version ${package.version} -`);
+    console.log(``);
     getConfigFiles(`${__dirname}/../configs/templates`, sortFiles);
 }
 

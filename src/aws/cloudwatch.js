@@ -1,6 +1,7 @@
 const moment = require('moment');
 const AWS = require('aws-sdk');
 
+const AWSCredentialsHandler = require('../lib/aws_credentials');
 
 module.exports = (template, action, namespace) => {
     return new Promise((resolve, reject) => {
@@ -15,7 +16,7 @@ module.exports = (template, action, namespace) => {
             default:
                 break;
         }
-        const CloudWatch = new AWS.CloudWatch({region: template.region});
+        const CloudWatch = new AWS.CloudWatch({region: template.region, credentials: AWSCredentialsHandler(template.profile)});
         CloudWatch.getMetricData({
             StartTime: moment().subtract(1, 'week').toDate(),
             EndTime: moment().toDate(),

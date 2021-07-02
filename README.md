@@ -1,10 +1,10 @@
-# SystemsTest
+# SysDiag
 
 Utility to diagnose systems and run recipe-like actions
 
 ## Requirements
 
-- Node.js > 10
+- Node.js (> 10)
 
 ## Compatibility
 
@@ -25,18 +25,17 @@ Inside the `configs` folder you will be able to add a `config.yml` file with the
 config:
   security:
     certificates_path: /Users/kyngo/Documents/Certificates/
-    rds_credentials_path: /Users/kyngo/Documents/Private/rds_credentials/
   slack:
     webhook: https://hooks.slack.com/services/ABCDEF123/ABCDEF123/ABCDEF123
 ```
 
-You can entirely skip the `slack` section if you do not intend to send reports via this channel. More chat integrations will be coming soon. The `credentials_path` is required as long as you need a certificate to enter a machine via SSH to perform tests (EC2). You can also entirely skip the `rds_credentials_path` if no RDS test is in place.
+You can entirely skip the `slack` section if you do not intend to send reports via this channel. More chat integrations will be coming soon. The `credentials_path` is required as long as you need a certificate to enter a machine via SSH to perform tests (EC2).
 
 Within the `configs` folder, you must create a `templates` folder, where you can place all of your recipes. These can be created in YML, just like the configuration file. More formats will be available in the future.
 
 Commands and files can have patterns that can be used to introduce specific strings, like today's date. More details below.
 
-An example template is below:
+## EC2 Example Template
 
 ```yml
 template:
@@ -98,7 +97,43 @@ template:
       path: s3://my-awesome-s3-backups-bucket/www/%TODAY%/database.sql
 ```
 
-## EC2 action types
+## RDS Example Template
+
+```yml
+template:
+  name: My Super Awesome DB
+  type: rds
+  region: af-south-1
+  database_id: my-super-awesome-db
+  engine: mysql
+  profile: default
+  credentials:
+    host: my-super-awesome-db.ciymlueaqnrt.af-south-1.rds.amazonaws.com
+    user: username
+    pass: my_4w3s0m3_p4ssw0rd
+    db: database
+  actions:
+    - name: latest snapshot
+      type: snapshot
+    - name: can connect to db
+      type: connection
+    - name: cpu below 80%
+      type: cloudwatch
+      metric: CPUUtilization
+      expected_output:
+        type: below
+        value: 80
+        measure: percent
+    - name: more than 5 gb of storage available
+      type: cloudwatch
+      metric: FreeStorageSpace
+      expected_output:
+        type: above
+        value: 5368709120
+        measure: gb
+```
+
+## Action types
 
 - name: name of the test
 - type: specified the type of test to be run, can be "command", "s3-exists" or "cloudwatch"
@@ -110,7 +145,7 @@ template:
         - match: the system will expect the same thing in the output and in this value, if it does not match, the test fails
         - max_value: numeric values only, if the number exceeds the one given in the config file, the test fails
       - value: the value that the system should expect, can be skipped if type is empty
-  - s3-exists: checks if the given file exists
+  - s3-exists: checks if the given file exists and is accessible within the instances' scope
     - path: the path to check
   - cloudwatch: checks a graph in cloudwatch since 7 days ago to the execution moment
     - metric: the CloudWatch metric name to retrieve

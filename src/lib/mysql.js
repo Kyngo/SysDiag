@@ -1,22 +1,14 @@
-const fs = require('fs');
-
-const YAML = require('yaml');
 const MySQL = require('mysql');
 
-module.exports = (template, config, returnDriver = false) => {
-    if (!config.config.security.rds_credentials_path) {
+module.exports = (template, returnDriver = false) => {
+    if (!template.credentials) {
         return null;
     }
-    const coreCredentials = fs.readFileSync(
-        `${config.config.security.rds_credentials_path}/${template.database_id}.yml`,
-        'utf-8'
-    );
-    const credentialsHandler = YAML.parse(coreCredentials);
     const con = MySQL.createConnection({
-        host: credentialsHandler.credentials.host,
-        user: credentialsHandler.credentials.user,
-        password: credentialsHandler.credentials.pass,
-        database: credentialsHandler.credentials.db
+        host: template.credentials.host,
+        user: template.credentials.user,
+        password: template.credentials.pass,
+        database: template.credentials.db
     });
 
     if (!con) {

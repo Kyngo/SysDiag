@@ -1,7 +1,6 @@
 const pdf = require("pdf-creator-node");
 const moment = require('moment');
 
-
 module.exports = (results, template, filenamePrefix) => new Promise((resolve, reject) => {
     const htmlTemplate = `
     <!DOCTYPE html>
@@ -11,7 +10,7 @@ module.exports = (results, template, filenamePrefix) => new Promise((resolve, re
             <title>Systems Test Diagnostics Report</title>
         </head>
         <body>
-            <h1 style="margin:0px;">Offing Systems Diagnostics</h1>
+            <h1 style="margin:0px;">Systems Diagnostics</h1>
             <p>Template: <b>${template.name}</b></p>
             <p>Export date: ${moment().format(`YYYY-MM-DD HH:mm:ss`)}</p>
             <!--TESTSTABLE-->
@@ -76,13 +75,13 @@ module.exports = (results, template, filenamePrefix) => new Promise((resolve, re
         border: "10mm",
         header: {
             height: "10mm",
-            contents: '<div style="text-align: center;"><i>INTERNAL DOCUMENTATION - DO NOT REDISTRIBUTE</i><span style="float:right">Page {{page}} of {{pages}}</span></div>'
+            contents: '<div style="text-align: center;"><span style="float:right">Page {{page}} of {{pages}}</span></div>'
         }
     };
 
     pdf.create(document, options)
     .then(res => {
-        console.log(`PDF successfully exported\r`);
+        console.log(`PDF successfully exported`);
         resolve();
     })
     .catch(error => {

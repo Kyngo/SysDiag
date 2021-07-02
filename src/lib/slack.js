@@ -3,7 +3,7 @@ const YAML = require('yaml');
 const axios = require('axios');
 
 module.exports = (basicMessage, msgsArray, templateName) => new Promise((resolve, reject) => {
-const rawConfig = fs.readFileSync(`${__dirname}/../../configs/config.yml`, 'utf-8');
+    const rawConfig = fs.readFileSync(`${__dirname}/../../configs/config.yml`, 'utf-8');
     const config = YAML.parse(rawConfig);
 
     if (config.config.slack && config.config.slack.webhook) {

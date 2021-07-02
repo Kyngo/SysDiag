@@ -1,10 +1,8 @@
-const fs = require('fs');
-
 const AWS = require('aws-sdk');
 const { NodeSSH } = require('node-ssh');
 const moment = require('moment');
-const YAML = require('yaml');
 
+const AWSCredentialsHandler = require('../lib/aws_credentials');
 
 module.exports = (template, config) => new Promise((resolveModule, rejectModule) => {const connections = [];
     const instances = [];
@@ -26,9 +24,8 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
     const runCommand = (instanceId, config) => new Promise((resolve, reject) => {
         const command = parseCommand(config.command);
         connections[instanceId].execCommand(command, { cwd: '/' }).then((result) => {
-            result.stdout = result.stdout.replace(/\\n/g, '\r');
-            result.stderr = result.stderr.replace(/\\n/g, '\r');
-            // code, signal, stdout, stderr
+            result.stdout = result.stdout.replace(/\\n/g, '');
+            result.stderr = result.stderr.replace(/\\n/g, '');
             if (config.expected_output) {
                 switch (config.expected_output.type) {
                     case 'max_value':
@@ -98,9 +95,9 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
                         result.instanceId = instances[instanceId].InstanceId;
                         results.push(result);
                         if (result.pass == true) {
-                            console.log(`✅ Test "${action.name}" Passed\r`);
+                            console.log(`✅ Test "${action.name}" Passed`);
                         } else {
-                            console.log(`❌ Test "${action.name}" Failed\r`);
+                            console.log(`❌ Test "${action.name}" Failed`);
                         }
                         scheduleCommands(instanceId, actionId + 1);
                     });
@@ -110,9 +107,9 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
                     require('./cloudwatch')(template, action, 'AWS/EC2').then((result) => {
                         results.push(result);
                         if (result.pass == true) {
-                            console.log(`✅ Test "${action.name}" Passed\r`);
+                            console.log(`✅ Test "${action.name}" Passed`);
                         } else {
-                            console.log(`❌ Test "${action.name}" Failed\r`);
+                            console.log(`❌ Test "${action.name}" Failed`);
                         }
                         scheduleCommands(instanceId, actionId + 1);
                     });
@@ -141,10 +138,10 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
                 privateKey: key,
                 port: config.config.security.port || 22
             }).then(() => {
-                console.log(`🖥  Connected to ${instanceId} via SSH\r`);
+                console.log(`🖥  Connected to ${instanceId} via SSH`);
                 scheduleCommands(id, 0);
             }).catch((err) => {
-                console.log(`Failed to connect to ${instanceId} via SSH\r`);
+                console.log(`Failed to connect to ${instanceId} via SSH`);
                 console.log(err);
                 workOnInstance(id + 1);
             });
@@ -159,7 +156,7 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
 
     const region = template.region || 'us-east-1';
 
-    const EC2 = new AWS.EC2({region});
+    const EC2 = new AWS.EC2({region, credentials: AWSCredentialsHandler(template.profile)});
     EC2.describeInstances({Filters: instanceTags}, (err, data) => {
         for (let res in data.Reservations) {
             const reservation = data.Reservations[res];

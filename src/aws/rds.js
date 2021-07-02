@@ -1,14 +1,11 @@
-const fs = require('fs');
-
 const AWS = require('aws-sdk');
 const moment = require('moment');
-const YAML = require('yaml');
 
-const MySQL = require('mysql');
+const AWSCredentialsHandler = require('../lib/aws_credentials');
 
 module.exports = (template, config) => {
     return new Promise((resolveModule, rejectModule) => {
-        const RDS = new AWS.RDS({region: template.region});
+        const RDS = new AWS.RDS({region: template.region, credentials: AWSCredentialsHandler(template.profile)});
         const results = [];
     
         const exportPdf = () => {
@@ -30,7 +27,7 @@ module.exports = (template, config) => {
                         switch (template.engine) {
                             case 'mysql':
                             case 'mariadb':
-                                res = require('../lib/mysql')(template, config, false);
+                                res = require('../lib/mysql')(template, false);
                                 results.push({
                                     pass: res,
                                     stdout: `Connection ${res ? 'succeeded' : 'failed'}`,
@@ -38,9 +35,9 @@ module.exports = (template, config) => {
                                     instanceId: template.database_id
                                 });
                                 if (res == true) {
-                                    console.log(`✅ Test "${action.name}" Passed\r`);
+                                    console.log(`✅ Test "${action.name}" Passed`);
                                 } else {
-                                    console.log(`❌ Test "${action.name}" Failed\r`);
+                                    console.log(`❌ Test "${action.name}" Failed`);
                                 }
                                 performTest(idx + 1, config);
                                 break;
@@ -53,10 +50,16 @@ module.exports = (template, config) => {
                             DBInstanceIdentifier: template.database_id
                         }, (err, data) => {
                             if (err) {
-                                console.log(err + "\r");
+                                console.log(err + "");
                                 process.exit();
                             }
-                            const lastSnapshot = data.DBSnapshots[data.DBSnapshots.length - 1];
+                            let lastSnapshot = data.DBSnapshots[0];
+                            for (let idx in data) {
+                                let snap = data[idx];
+                                if (moment(lastSnapshot.SnapshotCreateTime).unix() < moment(snap.SnapshotCreateTime).unix()) {
+                                    lastSnapshot = snap;
+                                }
+                            }
                             const now = moment().format('YYYY-MM-DD');
                             const snapshotDate = moment(lastSnapshot.SnapshotCreateTime).format('YYYY-MM-DD');
                             let pass = false;
@@ -68,9 +71,9 @@ module.exports = (template, config) => {
                                 instanceId: template.database_id
                             });
                             if (pass == true) {
-                                console.log(`✅ Test "${action.name}" Passed\r`);
+                                console.log(`✅ Test "${action.name}" Passed`);
                             } else {
-                                console.log(`❌ Test "${action.name}" Failed\r`);
+                                console.log(`❌ Test "${action.name}" Failed`);
                             }
                             performTest(idx + 1, config);
                         });
@@ -81,9 +84,9 @@ module.exports = (template, config) => {
                             result.instanceId = template.database_id;
                             results.push(result);
                             if (result.pass == true) {
-                                console.log(`✅ Test "${action.name}" Passed\r`);
+                                console.log(`✅ Test "${action.name}" Passed`);
                             } else {
-                                console.log(`❌ Test "${action.name}" Failed\r`);
+                                console.log(`❌ Test "${action.name}" Failed`);
                             }
                             performTest(idx + 1, config);
                         })
