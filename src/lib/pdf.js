@@ -37,7 +37,7 @@ module.exports = (results, template, filenamePrefix) => new Promise((resolve, re
                 </tr>
                 <tr>
                     <td style="width:15%;background-color:#ddd;">Result</td>
-                    <td><pre>{{this.stdout}}</pre></td>
+                    <td><pre style="font-family:monospace">{{this.stdout}}</pre></td>
                 </tr>
             </table>
             <br/>

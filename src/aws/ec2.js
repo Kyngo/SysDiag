@@ -4,7 +4,8 @@ const moment = require('moment');
 
 const AWSCredentialsHandler = require('../lib/aws_credentials');
 
-module.exports = (template, config) => new Promise((resolveModule, rejectModule) => {const connections = [];
+module.exports = (template, config) => new Promise((resolveModule, rejectModule) => {
+    const connections = [];
     const instances = [];
     const results = [];
     const actions = template.actions;
