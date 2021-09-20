@@ -84,27 +84,32 @@ const parseFiles = (files, idx = 0) => {
         const rawTemplate = YAML.parse(templateConfig);
         if (rawTemplate.template) {
             const { template } = rawTemplate;
-            console.log(`📚 Running template "${template.name}" ...`);
-            switch (template.type) {
-                case 'ec2':
-                    require('./aws/ec2')(template, config).then((results) => {
-                        console.log(`Template "${template.name}" executed`);
-                        parseResults(results, template.name, () => {
-                            parseFiles(files, idx + 1);
+            if (!template.skip) {
+                console.log(`📚 Running template "${template.name}" ...`);
+                switch (template.type) {
+                    case 'ec2':
+                        require('./aws/ec2')(template, config).then((results) => {
+                            console.log(`Template "${template.name}" executed`);
+                            parseResults(results, template.name, () => {
+                                parseFiles(files, idx + 1);
+                            });
                         });
-                    });
-                    break;
-                case 'rds':
-                    require('./aws/rds')(template, config).then((results) => {
-                        console.log(`Template "${template.name}" executed`);
-                        parseResults(results, template.name, () => {
-                            parseFiles(files, idx + 1);
+                        break;
+                    case 'rds':
+                        require('./aws/rds')(template, config).then((results) => {
+                            console.log(`Template "${template.name}" executed`);
+                            parseResults(results, template.name, () => {
+                                parseFiles(files, idx + 1);
+                            });
                         });
-                    });
-                    break;
-                default:
-                    console.log(`Unknown type ${template.type}`);
-                    process.exit();
+                        break;
+                    default:
+                        console.log(`Unknown type ${template.type}`);
+                        process.exit();
+                }
+            } else {
+                console.log(`⏭  Skipped platform ${template.name} - Reason: as specified in template file.`);
+                parseFiles(files, idx + 1);
             }
         } else {
             console.log(`Corrupted template ${files[idx]}`);
