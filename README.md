@@ -4,12 +4,13 @@ Utility to diagnose systems and run recipe-like actions
 
 ## Requirements
 
-- Node.js (> 10)
+- Node.js (>= 10)
 
 ## Compatibility
 
 - AWS EC2
 - AWS RDS (MySQL/MariaDB)
+- SSH
 
 ## Features
 
@@ -24,9 +25,11 @@ Inside the `configs` folder you will be able to add a `config.yml` file with the
 ```yml
 config:
   security:
-    certificates_path: /Users/kyngo/Documents/Certificates/
+    certificates_path: $HOME/Documents/Certificates/
+    default_ssh_key: $HOME/.ssh/id_rsa
   slack:
-    webhook: https://hooks.slack.com/services/ABCDEF123/ABCDEF123/ABCDEF123
+    webhook: https://hooks.slack.com/services/123ABC456/123ABC456DEF/5648964FG78WER4H77RWH7RTY
+  awsCredentialsFile: $HOME/.aws/credentials
 ```
 
 You can entirely skip the `slack` section if you do not intend to send reports via this channel. More chat integrations will be coming soon. The `credentials_path` is required as long as you need a certificate to enter a machine via SSH to perform tests (EC2).

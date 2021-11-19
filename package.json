@@ -1,7 +1,7 @@
 {
-  "name": "systemstest",
-  "version": "1.0",
-  "main": "index.js",
+  "name": "sysdiag",
+  "version": "1.0.0",
+  "main": "src/index.js",
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.834.0",
@@ -15,6 +15,9 @@
     "yaml": "^1.10.0"
   },
   "scripts": {
-    "start": "rm -rf results/*.pdf ; clear ; node ./src/index.js"
+    "start": "npm run clean ; clear ; node ./src/index.js",
+    "clean": "rm -rf results/*",
+    "wipe-logs": "rm -rf logs/*",
+    "clean:all": "npm run clean ; npm run wipe-logs"
   }
 }

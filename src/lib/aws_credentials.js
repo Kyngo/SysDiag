@@ -7,11 +7,12 @@ module.exports = (profile) => {
     const config = YAML.parse(rawConfig);
 
     if (config.config && config.config.awsCredentialsFile) {
-        if (!fs.existsSync(config.config.awsCredentialsFile)) {
+        const credentialsFilePath = config.config.awsCredentialsFile.replace('~', process.env.HOME).replace('$HOME', process.env.HOME);
+        if (!fs.existsSync(credentialsFilePath)) {
             throw new Error('File does not exist!');
         }
     
-        const rawAwsConfig = fs.readFileSync(config.config.awsCredentialsFile, 'utf-8');
+        const rawAwsConfig = fs.readFileSync(credentialsFilePath, 'utf-8');
         const awsConfig = ini.parse(rawAwsConfig);
         if (!awsConfig[profile]) {
             throw new Error('Profile does not exist!');

@@ -6,25 +6,17 @@ const moment = require('moment');
 
 const slackbot = require('./lib/slack');
 
-const package = require('../package.json');
+const pkgData = require('../package.json');
+const { consoleLog, consoleError } = require('./lib/core');
 
-console.log = function() {
-    for (let idx = 0; idx < arguments.length; idx++) {
-        const arg = arguments[idx];
-        fs.appendFileSync(`${__dirname}/../logs/latest.log`, arg);
-        process.stdout.write(arg + "\r\n");
-    }
-}
+console.log = consoleLog;
 
-console.error = function() {
-    for (let idx = 0; idx < arguments.length; idx++) {
-        const arg = arguments[idx];
-        fs.appendFileSync(`${__dirname}/../logs/latest.log`, arg);
-        process.stderr.write(arg + "\r\n");
-    }
-}
+console.error = consoleError;
 
 process.on('exit', (code) => {
+    if (code != 0) {
+        console.error("[!!] Process finished with code " + code);
+    }
     if (fs.existsSync(`${__dirname}/../logs/latest.log`)) {
         fs.renameSync(`${__dirname}/../logs/latest.log`, `${__dirname}/../logs/${moment().format('YYYY-MM-DD-HH-mm-ss')}.log`)
     }
@@ -88,6 +80,7 @@ const parseFiles = (files, idx = 0) => {
                 console.log(`📚 Running template "${template.name}" ...`);
                 switch (template.type) {
                     case 'ec2':
+                    case 'ssh':
                         require('./aws/ec2')(template, config).then((results) => {
                             console.log(`Template "${template.name}" executed`);
                             parseResults(results, template.name, () => {
@@ -140,6 +133,10 @@ const sortFiles = (err, files) => {
 const initialize = () => {
     if (!fs.existsSync(`${__dirname}/../logs`)) {
         fs.mkdirSync(`${__dirname}/../logs`);
+    } else {
+        if (fs.existsSync(`${__dirname}/../logs/latest.log`)) {
+            fs.rmSync(`${__dirname}/../logs/latest.log`);
+        }
     }
     console.log(``);
     console.log(`███████╗██╗   ██╗███████╗██████╗ ██╗ █████╗  ██████╗ `);
@@ -149,7 +146,7 @@ const initialize = () => {
     console.log(`███████║   ██║   ███████║██████╔╝██║██║  ██║╚██████╔╝`);
     console.log(`╚══════╝   ╚═╝   ╚══════╝╚═════╝ ╚═╝╚═╝  ╚═╝ ╚═════╝ `);
     console.log(``);
-    console.log(`    - Systems Diagnostics tool - Version ${package.version} -`);
+    console.log(`   - Systems Diagnostics tool - Version ${pkgData.version} -`);
     console.log(``);
     getConfigFiles(`${__dirname}/../configs/templates`, sortFiles);
 }

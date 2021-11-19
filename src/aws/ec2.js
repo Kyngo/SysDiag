@@ -2,6 +2,7 @@ const AWS = require('aws-sdk');
 const { NodeSSH } = require('node-ssh');
 const moment = require('moment');
 
+const { santitizeKeyPath } = require('../lib/core');
 const AWSCredentialsHandler = require('../lib/aws_credentials');
 
 module.exports = (template, config) => new Promise((resolveModule, rejectModule) => {
@@ -11,7 +12,11 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
     const actions = template.actions;
 
     const exportPdf = () => {
-        require('../lib/pdf')(results, template,`ec2-${template.region}`).then(() => {
+        let docName = `ssh`;
+        if (template.type == 'ec2') {
+            docName = `ec2-${template.region}`;
+        }
+        require('../lib/pdf')(results, template, docName).then(() => {
             resolveModule(results);
         }).catch(() => {
             rejectModule(results);
@@ -58,6 +63,12 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
                             result.pass = false;
                         }
                         break;
+                    case 'code':
+                        if (result.code == config.expected_output.value) {
+                            result.pass = true;
+                        } else {
+                            result.pass = false;
+                        }
                     default:
                         result.pass = true;
                         break;
@@ -130,7 +141,11 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
             
             const instanceIp = instance.PublicIpAddress;
             const username = template.auth.user;
-            const key = config.config.security.certificates_path.replace('~', process.env.HOME) + template.auth.key;
+            const key = template.auth.key ? (
+                santitizeKeyPath(config.config.security.certificates_path) + template.auth.key
+            ) : (
+                santitizeKeyPath(config.config.security.default_ssh_key)
+            );
             const instanceId = instance.InstanceId;
             connections[id] = new NodeSSH();
             connections[id].connect({
@@ -143,32 +158,40 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
                 scheduleCommands(id, 0);
             }).catch((err) => {
                 console.log(`Failed to connect to ${instanceId} via SSH`);
-                console.log(err);
+                console.log(err.toString());
                 workOnInstance(id + 1);
             });
         }
     }
 
-    const instanceTags = [];
+    if (template.type == 'ec2') {
+        const instanceTags = [];
+        
+        for (let idx in template.tags) {
+            instanceTags.push({ Name: `tag:${template.tags[idx].name}`, Values: [template.tags[idx].value]});
+        }
     
-    for (let idx in template.tags) {
-        instanceTags.push({ Name: `tag:${template.tags[idx].name}`, Values: [template.tags[idx].value]});
-    }
-
-    const region = template.region || 'us-east-1';
-
-    const EC2 = new AWS.EC2({region, credentials: AWSCredentialsHandler(template.profile)});
-    EC2.describeInstances({Filters: instanceTags}, (err, data) => {
-        for (let res in data.Reservations) {
-            const reservation = data.Reservations[res];
-            for (let ins in reservation.Instances) {
-                const instance = reservation.Instances[ins];
-                if (instance.PublicIpAddress) {
-                    instances.push(instance);
+        const region = template.region || 'us-east-1';
+    
+        const EC2 = new AWS.EC2({region, credentials: AWSCredentialsHandler(template.profile)});
+        EC2.describeInstances({Filters: instanceTags}, (err, data) => {
+            for (let res in data.Reservations) {
+                const reservation = data.Reservations[res];
+                for (let ins in reservation.Instances) {
+                    const instance = reservation.Instances[ins];
+                    if (instance.PublicIpAddress) {
+                        instances.push(instance);
+                    }
                 }
             }
-        }
-
+    
+            workOnInstance(0);
+        });
+    } else if (template.type == 'ssh') {
+        instances.push({
+            InstanceId: template.host,
+            PublicIpAddress: template.host
+        });
         workOnInstance(0);
-    });
+    }
 });
