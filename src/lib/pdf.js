@@ -2,6 +2,7 @@ const pdf = require("pdf-creator-node");
 const moment = require('moment');
 
 module.exports = (results, template, filenamePrefix) => new Promise((resolve, reject) => {
+    // the raw html template for the pdf file
     const htmlTemplate = `
     <!DOCTYPE html>
     <html>
@@ -46,6 +47,7 @@ module.exports = (results, template, filenamePrefix) => new Promise((resolve, re
     </html>
     `;
 
+    // color formatting for the result cells
     for (let idx in results) {
         if (results[idx].pass == true) {
             results[idx].pass = 'YES';
@@ -55,12 +57,15 @@ module.exports = (results, template, filenamePrefix) => new Promise((resolve, re
             results[idx].resultcolor = '#ffc7c7';
         }
     }
+
+    // sorting the tests alphabetically
     results.sort((a,b) => {
         const x = a.action.name.toUpperCase();
         const y = b.action.name.toUpperCase();
         return (x < y) ? -1 : (x > y) ? 1 : 0;
     });
 
+    // document config variables
     const document = {
         html: htmlTemplate,
         data: {
@@ -79,6 +84,7 @@ module.exports = (results, template, filenamePrefix) => new Promise((resolve, re
         }
     };
 
+    // pdf export
     pdf.create(document, options)
     .then(res => {
         console.log(`PDF successfully exported`);

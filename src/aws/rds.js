@@ -2,6 +2,7 @@ const AWS = require('aws-sdk');
 const moment = require('moment');
 
 const AWSCredentialsHandler = require('../lib/aws_credentials');
+const MakePDF = require('../lib/pdf');
 
 module.exports = (template, config) => {
     return new Promise((resolveModule, rejectModule) => {
@@ -9,7 +10,7 @@ module.exports = (template, config) => {
         const results = [];
     
         const exportPdf = () => {
-            require('../lib/pdf')(results, template, `rds-${template.region}`).then(() => {
+            MakePDF(results, template, `rds-${template.region}`).then(() => {
                 resolveModule(results);
             }).catch(() => {
                 rejectModule(results);

@@ -18,7 +18,7 @@ module.exports = (template, action, namespace) => {
         }
         const CloudWatch = new AWS.CloudWatch({region: template.region, credentials: AWSCredentialsHandler(template.profile)});
         CloudWatch.getMetricData({
-            StartTime: moment().subtract(1, 'week').toDate(),
+            StartTime: moment().subtract(1, 'day').toDate(),
             EndTime: moment().toDate(),
             MetricDataQueries: [{
                 Id: 'metric',

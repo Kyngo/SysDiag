@@ -2,8 +2,9 @@ const AWS = require('aws-sdk');
 const { NodeSSH } = require('node-ssh');
 const moment = require('moment');
 
-const { santitizeKeyPath } = require('../lib/core');
+const { santitizePath } = require('../lib/core');
 const AWSCredentialsHandler = require('../lib/aws_credentials');
+const MakePDF = require('../lib/pdf');
 
 module.exports = (template, config) => new Promise((resolveModule, rejectModule) => {
     const connections = [];
@@ -16,7 +17,7 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
         if (template.type == 'ec2') {
             docName = `ec2-${template.region}`;
         }
-        require('../lib/pdf')(results, template, docName).then(() => {
+        MakePDF(results, template, docName).then(() => {
             resolveModule(results);
         }).catch(() => {
             rejectModule(results);
@@ -142,9 +143,9 @@ module.exports = (template, config) => new Promise((resolveModule, rejectModule)
             const instanceIp = instance.PublicIpAddress;
             const username = template.auth.user;
             const key = template.auth.key ? (
-                santitizeKeyPath(config.config.security.certificates_path) + template.auth.key
+                santitizePath(config.config.security.certificates_path) + template.auth.key
             ) : (
-                santitizeKeyPath(config.config.security.default_ssh_key)
+                santitizePath(config.config.security.default_ssh_key)
             );
             const instanceId = instance.InstanceId;
             connections[id] = new NodeSSH();
