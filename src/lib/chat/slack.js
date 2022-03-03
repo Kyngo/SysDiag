@@ -4,7 +4,7 @@ const axios = require('axios');
 
 module.exports = (basicMessage, msgsArray, templateName) => new Promise((resolve, reject) => {
     // we load the core configuration file
-    const rawConfig = fs.readFileSync(`${__dirname}/../../configs/config.yml`, 'utf-8');
+    const rawConfig = fs.readFileSync(`${__dirname}/../../../configs/config.yml`, 'utf-8');
     const config = YAML.parse(rawConfig);
 
     // if we have a slack configuration section and a webhook defined, we will proceed to craft the payload
@@ -44,9 +44,7 @@ module.exports = (basicMessage, msgsArray, templateName) => new Promise((resolve
     
         // we send the payload over to the slack servers...
         axios.post(config.config.slack.webhook, msgBlock).then(() => resolve()).catch(() => resolve());
-    // ... or we don't
     } else {
-        console.log("[INFO] There is no slack configuration! Skipping the report.");
         resolve();
     }
 

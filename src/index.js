@@ -4,7 +4,7 @@ const path = require('path');
 const YAML = require('yaml');
 const moment = require('moment');
 
-const slackbot = require('./lib/slack');
+const chat = require('./lib/chat');
 
 const pkgData = require('../package.json');
 const { consoleLog, consoleError } = require('./lib/core');
@@ -70,12 +70,12 @@ const parseResults = (results, templateName, callback) => {
         const result = results[idx];
         // if the test has failed, we shall add it to the faled tests list
         if (result.pass == 'NO') {
-            failedTests.push(`:x: Test \`${result.action.name}\` failed.`);
+            failedTests.push(`❌ Test \`${result.action.name}\` failed.`);
         }
     }
     // if we have any failed test listed, we will report them on slack
     if (failedTests.length > 0) {
-        slackbot(`Problems emerged when running the "${templateName}" template`, failedTests, templateName).then(() => callback());
+        chat(`Problems emerged when running the "${templateName}" template`, failedTests, templateName).then(() => callback());
     } else {
         callback();
     }
